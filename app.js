@@ -28,6 +28,7 @@ function setup(shaders) {
         far: 20
     }
 
+    // options
     let options = {
         wireframe: false,
         normals: true
@@ -35,12 +36,14 @@ function setup(shaders) {
 
     const gui = new dat.GUI();
 
+    // options gui
     const optionsGui = gui.addFolder("options");
     optionsGui.add(options, "wireframe");
     optionsGui.add(options, "normals");
 
-    const cameraGui = gui.addFolder("camera");
 
+    // camera gui
+    const cameraGui = gui.addFolder("camera");
     cameraGui.add(camera, "fovy").min(1).max(179).step(1).listen();
     cameraGui.add(camera, "aspect").min(0).max(10).step(0.01).listen().domElement.style.pointerEvents = "none";
 
@@ -66,6 +69,62 @@ function setup(shaders) {
     up.add(camera.up, 0).step(0.05).listen().domElement.style.pointerEvents = "none";;
     up.add(camera.up, 1).step(0.05).listen().domElement.style.pointerEvents = "none";;
     up.add(camera.up, 2).step(0.05).listen().domElement.style.pointerEvents = "none";;
+
+    
+
+    // todo
+    /*
+    GUI todo
+        pre: go over code check if implementation is correct
+        1. options - backface culling, depth test
+        2. take away aspect
+        3. add lights - 1,2,3
+            - position - x,y,z,w (w point or directional) (somehow also spotlight)
+            - intensities (I) - ambient, diffuse, specular (and their color)
+            - axis - x,y,z, aperture, cutoff
+        4. material - Ka,Kd,Ka, shininess 
+            aka bunny meterial changing
+
+
+    Scene todo
+        (can use json maybe?)
+        - first attempt ignore json
+        floor:
+        "a parallelepiped platform measuring 10 x 0.5 x 10 (in WC), 
+        aligned with the world axes and with its upper face at $y=0$."
+
+        4 objects:
+        "4 primitive objects, from those provided in the libs folder, 
+        placed on top of the platform and centered in each of the quadrants. 
+        You can use a 2 x 2 x 2 cube as a reference for their size. 
+        The Bunny object should be in one of the quadrants."
+
+        lights:
+        note can add a sphere object to point lights to position them...
+        "1 to 3 lights controlled by the user using an interface implemented using the dat.gui library."
+
+        array of lights each light is a object
+                                        "If it supports more than one light source, 
+                                        its interface should be created in such a way that 
+                                        adding a new light source to your program will simply result in 
+                                        adding another object (with the properties of the light source) 
+                                        to a vector that stores all the lights in the scene."
+
+
+    shading
+        Gouraud shading -> vertex shader
+        Phong shading -> do similar but it the fragment shader 
+
+    
+    
+
+    suggested possible changes
+        world coordinate instead of camera
+        fly around using w,a,s,d
+
+    
+
+    */
 
     // matrices
     let mView, mProjection;
