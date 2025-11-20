@@ -8,8 +8,6 @@ import * as SPHERE from '../../libs/objects/sphere.js';
 
 import * as STACK from '../../libs/stack.js';
 
-let CTRL_PRESS = false;
-
 function setup(shaders) {
     const canvas = document.getElementById('gl-canvas');
     const gl = setupWebGL(canvas);
@@ -42,49 +40,32 @@ function setup(shaders) {
     optionsGui.add(options, "normals");
 
     const cameraGui = gui.addFolder("camera");
-    cameraGui.add(camera, 'fovy').min(10).max(180).step(1).listen();
-    cameraGui.add(camera, 'aspect').min(0.1).max(10).step(0.1).listen().domElement.style.pointerEvents = "none";
-    cameraGui.add(camera, 'near').min(0.1).max(camera.far).step(0.1).listen().domElement.style.pointerEvents = "none"; 
-    cameraGui.add(camera, 'far').min(camera.near).max(20).step(0.1).listen().domElement.style.pointerEvents = "none";
 
+    cameraGui.add(camera, "fovy").min(1).max(179).step(1).listen();
+    cameraGui.add(camera, "aspect").min(0).max(10).step(0.01).listen().domElement.style.pointerEvents = "none";
 
-    canvas.addEventListener("keydown", function(event){
-        if (event.key == "ctrl"){
-        CTRL_PRESS = true;
-        }
-        console.log(CTRL_PRESS);
+    cameraGui.add(camera, "near").min(0.1).max(20).step(0.01).listen().onChange(function (v) {
+        camera.near = Math.min(camera.far - 0.5, v);
     });
 
-    canvas.addEventListener("keyup", function(event){
-        if (event.key == "ctrl"){
-        CTRL_PRESS = false;
-        }
+    cameraGui.add(camera, "far").min(0.1).max(20).step(0.01).listen().onChange(function (v) {
+        camera.far = Math.max(camera.near + 0.5, v);
     });
 
-    canvas.addEventListener("wheel", function(event){
-        if (CTRL_PRESS){
-            camera.eye += event.deltaY*0.5;
-        } else {
-            camera.fovy += event.deltaY*0.5;
-        }
-    });
+    const eye = cameraGui.addFolder("eye");
+    eye.add(camera.eye, 0).step(0.05).listen().domElement.style.pointerEvents = "none";;
+    eye.add(camera.eye, 1).step(0.05).listen().domElement.style.pointerEvents = "none";;
+    eye.add(camera.eye, 2).step(0.05).listen().domElement.style.pointerEvents = "none";;
 
+    const at = cameraGui.addFolder("at");
+    at.add(camera.at, 0).step(0.05).listen().domElement.style.pointerEvents = "none";;
+    at.add(camera.at, 1).step(0.05).listen().domElement.style.pointerEvents = "none";;
+    at.add(camera.at, 2).step(0.05).listen().domElement.style.pointerEvents = "none";;
 
-    const eyeGui = gui.addFolder("eye");
-    eyeGui.add(camera.eye, 0).listen().domElement.style.pointerEvents = "none";
-    eyeGui.add(camera.eye, 1).listen().domElement.style.pointerEvents = "none";
-    eyeGui.add(camera.eye, 2).listen().domElement.style.pointerEvents = "none";
-
-    const atGui = gui.addFolder("at");
-    atGui.add(camera.at, 0).listen().domElement.style.pointerEvents = "none";
-    atGui.add(camera.at, 1).listen().domElement.style.pointerEvents = "none";
-    atGui.add(camera.at, 2).listen().domElement.style.pointerEvents = "none";
-
-    const upGui = gui.addFolder("up");
-    upGui.add(camera.up, 0).listen().domElement.style.pointerEvents = "none";
-    upGui.add(camera.up, 1).listen().domElement.style.pointerEvents = "none";
-    upGui.add(camera.up, 2).listen().domElement.style.pointerEvents = "none";
-
+    const up = cameraGui.addFolder("up");
+    up.add(camera.up, 0).step(0.05).listen().domElement.style.pointerEvents = "none";;
+    up.add(camera.up, 1).step(0.05).listen().domElement.style.pointerEvents = "none";;
+    up.add(camera.up, 2).step(0.05).listen().domElement.style.pointerEvents = "none";;
 
     // matrices
     let mView, mProjection;
@@ -99,6 +80,90 @@ function setup(shaders) {
 
     window.addEventListener('resize', resizeCanvasToFullWindow);
 
+    window.addEventListener('wheel', function (event) {
+
+
+        if (!event.altKey && !event.metaKey && !event.ctrlKey) { // Change fovy
+            const factor = 1 - event.deltaY / 1000;
+            camera.fovy = Math.max(1, Math.min(100, camera.fovy * factor));
+        }
+        else if (event.metaKey || event.ctrlKey) {
+            // move camera forward and backwards (shift)
+
+            const offset = event.deltaY / 1000;
+
+            const dir = normalize(subtract(camera.at, camera.eye));
+
+            const ce = add(camera.eye, scale(offset, dir));
+            const ca = add(camera.at, scale(offset, dir));
+
+            // Can't replace the objects that are being listened by dat.gui, only their properties.
+            camera.eye[0] = ce[0];
+            camera.eye[1] = ce[1];
+            camera.eye[2] = ce[2];
+
+            if (event.ctrlKey) {
+                camera.at[0] = ca[0];
+                camera.at[1] = ca[1];
+                camera.at[2] = ca[2];
+            }
+        }
+    });
+
+    function inCameraSpace(m) {
+        const mInvView = inverse(mView);
+
+        return mult(mInvView, mult(m, mView));
+    }
+
+    canvas.addEventListener('mousemove', function (event) {
+        if (down) {
+            const dx = event.offsetX - lastX;
+            const dy = event.offsetY - lastY;
+
+            if (dx != 0 || dy != 0) {
+                // Do something here...
+
+                const d = vec2(dx, dy);
+                const axis = vec3(-dy, -dx, 0);
+
+                const rotation = rotate(0.5 * length(d), axis);
+
+                let eyeAt = subtract(camera.eye, camera.at);
+                eyeAt = vec4(eyeAt[0], eyeAt[1], eyeAt[2], 0);
+                let newUp = vec4(camera.up[0], camera.up[1], camera.up[2], 0);
+
+                eyeAt = mult(inCameraSpace(rotation), eyeAt);
+                newUp = mult(inCameraSpace(rotation), newUp);
+
+                console.log(eyeAt, newUp);
+
+                camera.eye[0] = camera.at[0] + eyeAt[0];
+                camera.eye[1] = camera.at[1] + eyeAt[1];
+                camera.eye[2] = camera.at[2] + eyeAt[2];
+
+                camera.up[0] = newUp[0];
+                camera.up[1] = newUp[1];
+                camera.up[2] = newUp[2];
+
+                lastX = event.offsetX;
+                lastY = event.offsetY;
+            }
+
+        }
+    });
+
+    canvas.addEventListener('mousedown', function (event) {
+        down = true;
+        lastX = event.offsetX;
+        lastY = event.offsetY;
+        gl.clearColor(0.2, 0.0, 0.0, 1.0);
+    });
+
+    canvas.addEventListener('mouseup', function (event) {
+        down = false;
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    });
 
     window.requestAnimationFrame(render);
 
