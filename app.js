@@ -34,6 +34,31 @@ function setup(shaders) {
         normals: true
     }
 
+    // lights
+    let lights = [
+        // light 1
+        {
+            position: {
+                x: 0,
+                y: 0,
+                z: 0
+            },
+            intensities: {
+                ambient: [0.0,0.0,0.0],
+                diffuse: [0.0,0.0,0.0],
+                specular: [0.0,0.0,0.0]
+            },
+            axis: {
+                x: 0,
+                y: 0,
+                z: 0
+            },
+            aperture: 0.0,
+            cutoff: 0.0
+        }
+        // light 2
+    ]
+
     const gui = new dat.GUI();
 
     // options gui
@@ -69,6 +94,13 @@ function setup(shaders) {
     up.add(camera.up, 0).step(0.05).listen().domElement.style.pointerEvents = "none";;
     up.add(camera.up, 1).step(0.05).listen().domElement.style.pointerEvents = "none";;
     up.add(camera.up, 2).step(0.05).listen().domElement.style.pointerEvents = "none";;
+
+    // lights gui
+    const lightsGui = gui.addFolder("lights");
+    const light1Gui = lightsGui.addFolder("light1");
+    const lightPositionGui = light1Gui.addFolder("position");
+    light1Gui.add(lights[0], "aperture");
+    light1Gui.add(lights[0], "cutoff");  
 
     
 
