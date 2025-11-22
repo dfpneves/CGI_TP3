@@ -4,21 +4,6 @@ import { length, flatten, inverse, mult, normalMatrix, perspective, lookAt, vec4
 import * as dat from '../../libs/dat.gui.module.js';
 
 import * as CUBE from '../../libs/objects/cube.js';
-<<<<<<< HEAD
-import * as SPHERE from '../../libs/objects/sphere.js';
-import * as BUNNY from '../../libs/objects/bunny.js';
-import * as TORUS from '../../libs/objects/torus.js';
-import * as STACK from '../../libs/stack.js';
-
-
-let gl;
-let canvas;
-let program;
-let mView;
-let sceneConfigurationObject = {};
-let datGuiConfigurationObject = {};
-
-=======
 import * as BUNNY from '../../libs/objects/bunny.js';
 import * as TORUS from '../../libs/objects/torus.js';
 import * as CYLINDER from '../../libs/objects/cylinder.js';
@@ -33,7 +18,6 @@ let mView;
 let sceneConfigurationObject = {};
 let datGuiConfigurationObject = {};
 
->>>>>>> 8118896 (Defined first object of scene)
 function defineCamera(gui){
      // Camera  
     sceneConfigurationObject.camera = {
@@ -101,15 +85,6 @@ function defineOptions(gui, gl){
 
 function initLights(){
     sceneConfigurationObject.lights = [
-<<<<<<< HEAD
-        // Light 1
-        {
-            position: { x: 0.0, y: 0.0, z: 0.0, w: 0.0 }, 
-            intensities: {
-                ambient: [0.0, 0.0, 0.0],
-                diffuse: [0.0, 0.0, 0.0],
-                specular: [0.0, 0.0, 0.0]
-=======
         // Light 1 -> Directional
         {
             position: { x: 0.0, y: 0.0, z: -1.0, w: 0.0 }, 
@@ -117,7 +92,6 @@ function initLights(){
                 ambient: [0.1, 0.1, 0.1],
                 diffuse: [0.7, 0.7, 0.7],
                 specular: [0.9, 0.9, 0.9]
->>>>>>> 8118896 (Defined first object of scene)
             },
             axis: { x: 0.0, y: 0.0, z: 0.0 },
             aperture: 0.0, 
@@ -151,11 +125,7 @@ function initLights(){
 }
 
 function updateLightIntensity(index, type, color){
-<<<<<<< HEAD
-    //TODO
-=======
     sceneConfigurationObject.lights[index].intensities[type] = [color[0] / 255, color[1] / 255, color[2] / 255];
->>>>>>> 8118896 (Defined first object of scene)
 }
 
 function makeLightGui(lightGui, light, index){
@@ -198,28 +168,16 @@ function defineLights(gui){
 
 }
 
-<<<<<<< HEAD
-function updateMaterialColor(){
-    //TODO
-=======
 function updateMaterialColor(type, color){
     sceneConfigurationObject.material[type] = [color[0] / 255, color[1] / 255, color[2] / 255];
->>>>>>> 8118896 (Defined first object of scene)
 }
 
 function defineMaterials(gui){
     sceneConfigurationObject.material = {
-<<<<<<< HEAD
-        Ka: [0.0, 0.0, 0.0],         
-        Kd: [0.0, 0.0, 0.0],         
-        Ks: [0.0, 0.0, 0.0], 
-        shininess: 0         
-=======
         Ka: [0.1, 0.1, 0.1],         
         Kd: [0.7, 0.7, 0.7],         
         Ks: [0.9, 0.9, 0.9], 
         shininess: 30         
->>>>>>> 8118896 (Defined first object of scene)
     };
 
     const material = sceneConfigurationObject.material;
@@ -241,18 +199,6 @@ function defineMaterials(gui){
 
 function defineScene(){
     sceneConfigurationObject.objects = [{
-<<<<<<< HEAD
-        name: "Ground",
-        shape: CUBE,
-        modelMatrix: 0 // make Transformations   
-    },
-    {
-        name: "Bunny", 
-        shape: BUNNY,
-        modelMatrix: 0
-        
-    }
-=======
         name: "Table",
         shape: CUBE,
         transformations: [{transformationType: "s", measures: [10, 0.5, 10]}], // make Transformations 
@@ -260,7 +206,6 @@ function defineScene(){
                    Kd:[0.6, 0.3, 0.1],
                    Ks:[0.3, 0.15, 0.05]}  
     },
->>>>>>> 8118896 (Defined first object of scene)
     // OTHER SCENE OBJECTS
     ];    
 }
@@ -371,15 +316,9 @@ function setup(shaders) {
     gl = setupWebGL(canvas);
 
     CUBE.init(gl);
-<<<<<<< HEAD
-    SPHERE.init(gl);
-    BUNNY.init(gl);
-    TORUS.init(gl);
-=======
     BUNNY.init(gl);
     TORUS.init(gl);
     CYLINDER.init(gl);
->>>>>>> 8118896 (Defined first object of scene)
 
     program = buildProgramFromSources(gl, shaders['shader.vert'], shaders['shader.frag']);
     const gui = new dat.GUI();
@@ -415,15 +354,6 @@ function render(time) {
     
     mView = lookAt(camera.eye, camera.at, camera.up);;
     const mProjection = perspective(camera.fovy, camera.aspect, camera.near, camera.far);
-<<<<<<< HEAD
-    
-    gl.uniformMatrix4fv(gl.getUniformLocation(program, "u_model_view"), false, flatten(STACK.modelView()));
-    gl.uniformMatrix4fv(gl.getUniformLocation(program, "u_projection"), false, flatten(mProjection));
-    gl.uniformMatrix4fv(gl.getUniformLocation(program, "u_normals"), false, flatten(normalMatrix(STACK.modelView())));
-    gl.uniform1i(gl.getUniformLocation(program, "u_use_normals"), options.normals);
-    SPHERE.draw(gl, program, options.wireframe ? gl.LINES : gl.TRIANGLES);
-    CUBE.draw(gl, program, gl.LINES);
-=======
     gl.uniformMatrix4fv(gl.getUniformLocation(program, "u_projection"), false, flatten(mProjection));
 
     const numLights = lights.length;
@@ -469,7 +399,6 @@ function render(time) {
     }
 
    
->>>>>>> 8118896 (Defined first object of scene)
 }
 
 const urls = ['shader.vert', 'shader.frag'];
