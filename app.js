@@ -7,6 +7,7 @@ import * as CUBE from '../../libs/objects/cube.js';
 import * as BUNNY from '../../libs/objects/bunny.js';
 import * as TORUS from '../../libs/objects/torus.js';
 import * as CYLINDER from '../../libs/objects/cylinder.js';
+import * as SPHERE from '../../libs/objects/sphere.js';
 import * as STACK from '../../libs/stack.js';
 
 
@@ -21,7 +22,7 @@ let datGuiConfigurationObject = {};
 function defineCamera(gui){
      // Camera  
     sceneConfigurationObject.camera = {
-        eye: vec3(0, 0, 5),
+        eye: vec3(0, 3, 10),
         at: vec3(0, 0, 0),
         up: vec3(0, 1, 0),
         fovy: 45,
@@ -202,10 +203,54 @@ function defineScene(){
         name: "Table",
         shape: CUBE,
         transformations: [{transformationType: "s", measures: [10, 0.5, 10]}], // make Transformations 
-        material: {Ka:[0.1, 0.05, 0.0],
-                   Kd:[0.6, 0.3, 0.1],
-                   Ks:[0.3, 0.15, 0.05]}  
+        material: {Ka:[0.43, 0.37, 0.18],
+                   Kd:[0.0, 0.0, 0.0],
+                   Ks:[0.0, 0.0, 0.0]},
+        color: [],
+
     },
+    {   
+        name: "cube",
+        shape: CUBE,
+        transformations: [{transformationType: "t", measures: [2.0, 1.25, 2.0]}, {transformationType: "s", measures: [2, 2, 2]}],
+        material: { Ka:[0.1, 0.05, 0.0],
+                    Kd:[0.6, 0.3, 0.1],
+                    Ks:[0.3, 0.15, 0.05]
+        }
+    },
+    {
+        name: "torus",
+        shape: TORUS,
+        transformations: [{transformationType: "t", measures: [-2.0, 1.25, 2.0]}, {transformationType: "s", measures: [2, 2, 2]}],
+        material: { Ka:[0.1, 0.05, 0.0],
+                    Kd:[0.6, 0.3, 0.1],
+                    Ks:[0.3, 0.15, 0.05]
+        },
+        color: [],
+    },
+    {
+    name: "sphere",
+        shape: SPHERE,
+        transformations: [{transformationType: "t", measures: [2.0, 1.25, -2.0]}, {transformationType: "s", measures: [2, 2, 2]}],
+        material: { Ka:[0.1, 0.05, 0.0],
+                    Kd:[0.6, 0.3, 0.1],
+                    Ks:[0.3, 0.15, 0.05]
+        },
+        color: [],
+    },
+    {
+    name: "bunny",
+        shape: BUNNY,
+        transformations: [{transformationType: "t", measures: [-2.0, 1.25, -2.0]}, {transformationType: "s", measures: [2, 2, 2]}],
+        material: { Ka:[0.8, 0.8, 0.8],
+                    Kd:[0.6, 0.3, 0.1],
+                    Ks:[0.3, 0.15, 0.05]
+        },
+        color: [],
+    }
+
+
+
     // OTHER SCENE OBJECTS
     ];    
 }
@@ -286,12 +331,12 @@ function setupMouseEvents(){
         down = true;
         lastX = event.offsetX;
         lastY = event.offsetY;
-        gl.clearColor(0.2, 0.0, 0.0, 1.0);
+        //gl.clearColor(0.2, 0.0, 0.0, 1.0);
     });
 
     canvas.addEventListener('mouseup', function (event) {
         down = false;
-        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        //gl.clearColor(0.0, 0.0, 0.0, 1.0);
     });
     
     
@@ -319,6 +364,7 @@ function setup(shaders) {
     BUNNY.init(gl);
     TORUS.init(gl);
     CYLINDER.init(gl);
+    SPHERE.init(gl);
 
     program = buildProgramFromSources(gl, shaders['shader.vert'], shaders['shader.frag']);
     const gui = new dat.GUI();
@@ -394,6 +440,11 @@ function render(time) {
         gl.uniformMatrix4fv(gl.getUniformLocation(program, "u_model_view"), false, flatten(STACK.modelView()));
         gl.uniformMatrix4fv(gl.getUniformLocation(program, "u_normals"), false, flatten(normalMatrix(STACK.modelView())));
         gl.uniform1i(gl.getUniformLocation(program, "u_use_normals"), options.normals);
+        // send material colors
+        gl.uniform3fv(gl.getUniformLocation(program, "u_Ka"), object.material.Ka);
+        gl.uniform3fv(gl.getUniformLocation(program, "u_Kd"), object.material.Kd);
+        gl.uniform3fv(gl.getUniformLocation(program, "u_Ks"), object.material.Ks);
+        gl.uniform1f(gl.getUniformLocation(program, "u_shininess"), material.shininess);
         object.shape.draw(gl, program, gl.TRIANGLES);
         STACK.popMatrix();
     }
