@@ -4,6 +4,8 @@ precision mediump float;
 
 uniform bool u_use_normals;
 
+// Camera
+uniform vec3 u_camera_eye;
 
 // lights can use struct
 
@@ -30,16 +32,44 @@ uniform vec3 u_Ks;
 uniform float u_shininess;
 
 in vec3 v_normal;
+in vec3 v_position;
 
 out vec4 color;
 
-void main() {
-    vec3 c = vec3(u_Ka.x, u_Ka.y, u_Ka.z);
-    vec3 color2 = vec3(0.43f, 0.37f, 0.18f);
-    vec3 color3 = u_L[0].axis;
+vec3 phongShading(Light light, vec3 N, vec3 P, vec3 V){
+    vec3 L;
+    float lightDistance = 1.0;
+    
+    if(light.position.w == 0.0) L = normalize(light.position.xyz);
+    else L = normalize(light.position.xyz - P);
 
-    if(u_use_normals)
-        c = 0.5f * (v_normal + vec3(1.0f, 1.0f, 1.0f));
+    vec3 ambient = u_Ka * light.a;
 
-    color = vec4(c, 1.0f);
+    float diffuseFactor = max( dot(L,N), 0.0 );
+    vec3 diffuse = diffuseFactor * light.d;
+
+    vec3 H = normalize(L+V);
+    float specularFactor = pow(max(dot(N,H), 0.0), u_shininess);
+    vec3 specular = specularFactor * light.s;
+    if( dot(L,N) < 0.0 ) specular = vec3(0.0, 0.0, 0.0);
+    
+    return ambient + diffuse + specular;
 }
+
+void main() {
+    if(u_use_normals) {
+        color = vec4(0.5f * (normalize(v_normal) + vec3(1.0f)), 1.0f);
+        return;
+    }
+    vec3 N = normalize(v_normal);
+    vec3 P = v_position; 
+    vec3 V = normalize(-P);
+
+    vec3 final_color;
+    for(int i = 0; i < u_numLights; i++) {
+        final_color += phongShading(u_L[i], N, P, V);
+    }
+    color = vec4(final_color, 1.0);
+}
+
+

@@ -8,8 +8,11 @@ uniform mat4 u_model_view;
 uniform mat4 u_normals;
 
 out vec3 v_normal;
+out vec3 v_position;
 
 void main() {
-    gl_Position = u_projection * u_model_view * a_position;
+    vec4 eye = u_model_view * a_position;
+    v_position = eye.xyz;
     v_normal = (u_normals * vec4(a_normal, 0.0f)).xyz;
+    gl_Position = u_projection * eye;
 }

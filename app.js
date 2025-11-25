@@ -395,6 +395,7 @@ function render(time) {
     mView = lookAt(camera.eye, camera.at, camera.up);;
     const mProjection = perspective(camera.fovy, camera.aspect, camera.near, camera.far);
     gl.uniformMatrix4fv(gl.getUniformLocation(program, "u_projection"), false, flatten(mProjection));
+    gl.uniform3fv(gl.getUniformLocation(program, "u_camera_eye"), flatten(camera.eye));
 
     const numLights = lights.length;
     gl.uniform1i(gl.getUniformLocation(program, "u_numLights"), numLights);
@@ -441,13 +442,13 @@ function render(time) {
         // aperture
         gl.uniform1f(
             gl.getUniformLocation(program, `u_L[${i}].aperture`),
-            light.intensities.aperture
+            light.aperture
         );
 
         // cutoff
         gl.uniform1f(
             gl.getUniformLocation(program, `u_L[${i}].cutoff`),
-            light.intensities.cutoff
+            light.cutoff
         );
     }
    
