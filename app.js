@@ -88,11 +88,11 @@ function initLights(){
     sceneConfigurationObject.lights = [
         // Light 1 -> Directional
         {
-            position: { x: 0.0, y: 0.0, z: -1.0, w: 0.0 }, 
+            position: { x: 0.0, y: 0.0, z: 10.0, w: 1.0 }, 
             intensities: {
-                ambient: [0.1, 0.1, 0.1],
-                diffuse: [0.7, 0.7, 0.7],
-                specular: [0.9, 0.9, 0.9]
+                ambient: [0.2, 0.2, 0.2],
+                diffuse: [0.25, 0.25, 0.25],
+                specular: [1.0, 1.0, 1.0]
             },
             axis: { x: 1.0, y: 1.0, z: 1.0 },
             aperture: 0.0, 
@@ -102,9 +102,9 @@ function initLights(){
         {
             position: { x: 0.0, y: 0.0, z: 0.0, w: 0.0 }, 
             intensities: {
-                ambient: [0.0, 0.0, 0.0],
-                diffuse: [0.0, 0.0, 0.0],
-                specular: [0.0, 0.0, 0.0]
+                ambient: [0.5, 0.5, 0.5],
+                diffuse: [0.3, 0.3, 0.3],
+                specular: [0.4, 0.4, 0.4]
             },
             axis: { x: 0.0, y: 0.0, z: 0.0 }, 
             aperture: 0.0, 
@@ -175,7 +175,7 @@ function updateMaterialColor(type, color){
 
 function defineMaterials(gui){
     sceneConfigurationObject.material = {
-        Ka: [0.8, 0.8, 0.8],         
+        Ka: [1.0, 0.8, 0.8],         
         Kd: [0.8, 0.8, 0.8],         
         Ks: [0.9, 0.9, 0.9], 
         shininess: 30         
@@ -213,17 +213,17 @@ function defineScene(){
         name: "cube",
         shape: CUBE,
         transformations: [{transformationType: "t", measures: [2.0, 1.25, 2.0]}, {transformationType: "s", measures: [2, 2, 2]}],
-        material: { Ka:[0.1, 0.05, 0.0],
-                    Kd:[0.6, 0.3, 0.1],
-                    Ks:[0.3, 0.15, 0.05]
+        material: { Ka:[0.9, 0.1, 0.1],
+                    Kd:[0.9, 0.1, 0.1],
+                    Ks:[0.9, 0.1, 0.1]
         }
     },
     {
         name: "torus",
         shape: TORUS,
-        transformations: [{transformationType: "t", measures: [-2.0, 1.25, 2.0]}, {transformationType: "s", measures: [2, 2, 2]}],
-        material: { Ka:[0.1, 0.05, 0.0],
-                    Kd:[0.6, 0.3, 0.1],
+        transformations: [{transformationType: "t", measures: [-2.0, 0.7, 2.0]}, {transformationType: "s", measures: [2, 2, 2]}],
+        material: { Ka:[0.2, 1.0, 0.5],
+                    Kd:[0.7, 0.9, 0.5],
                     Ks:[0.3, 0.15, 0.05]
         },
         color: [],
@@ -232,7 +232,7 @@ function defineScene(){
     name: "sphere",
         shape: SPHERE,
         transformations: [{transformationType: "t", measures: [2.0, 1.25, -2.0]}, {transformationType: "s", measures: [2, 2, 2]}],
-        material: { Ka:[0.1, 0.05, 0.0],
+        material: { Ka:[0.1, 0.4, 0.5],
                     Kd:[0.6, 0.3, 0.1],
                     Ks:[0.3, 0.15, 0.05]
         },
@@ -404,7 +404,7 @@ function render(time) {
 
         // position
         gl.uniform4f(
-            gl.getUniformLocation(program, `u_L[${i}].p`),
+            gl.getUniformLocation(program, `u_L[${i}].position`),
                 light.position.x,
                 light.position.y,
                 light.position.z,
@@ -414,19 +414,19 @@ function render(time) {
         // intensities:
         // ambient
         gl.uniform3fv(
-            gl.getUniformLocation(program, `u_L[${i}].a`),
+            gl.getUniformLocation(program, `u_L[${i}].ambient`),
             light.intensities.ambient
         );
 
         // diffuse
         gl.uniform3fv(
-            gl.getUniformLocation(program, `u_L[${i}].d`),
+            gl.getUniformLocation(program, `u_L[${i}].diffuse`),
             light.intensities.diffuse
         );
 
         // specular
         gl.uniform3fv(
-            gl.getUniformLocation(program, `u_L[${i}].s`),
+            gl.getUniformLocation(program, `u_L[${i}].specular`),
             light.intensities.specular
         );
 

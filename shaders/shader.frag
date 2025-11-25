@@ -14,9 +14,9 @@ uniform int u_numLights;
 struct Light {
     vec4 position;
     
-    vec3 a;
-    vec3 d;
-    vec3 s;
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
 
     vec3 axis;
     float aperture;
@@ -38,19 +38,22 @@ out vec4 color;
 
 vec3 phongShading(Light light, vec3 N, vec3 P, vec3 V){
     vec3 L;
-    float lightDistance = 1.0;
     
     if(light.position.w == 0.0) L = normalize(light.position.xyz);
     else L = normalize(light.position.xyz - P);
 
-    vec3 ambient = u_Ka * light.a;
+    vec3 ambient = u_Ka * light.ambient;
+    
+    //TODO: lightRing calculation, using cutOff and Aperture
+    float lightRing = 1.0;
 
     float diffuseFactor = max( dot(L,N), 0.0 );
-    vec3 diffuse = diffuseFactor * light.d;
+    vec3 diffuse = diffuseFactor * light.diffuse * u_Kd;
 
     vec3 H = normalize(L+V);
     float specularFactor = pow(max(dot(N,H), 0.0), u_shininess);
-    vec3 specular = specularFactor * light.s;
+    vec3 specular = specularFactor * light.specular * u_Ks;
+
     if( dot(L,N) < 0.0 ) specular = vec3(0.0, 0.0, 0.0);
     
     return ambient + diffuse + specular;
@@ -65,7 +68,7 @@ void main() {
     vec3 P = v_position; 
     vec3 V = normalize(-P);
 
-    vec3 final_color;
+    vec3 final_color = vec3(0.0);
     for(int i = 0; i < u_numLights; i++) {
         final_color += phongShading(u_L[i], N, P, V);
     }
