@@ -94,7 +94,7 @@ function initLights(){
                 diffuse: [0.7, 0.7, 0.7],
                 specular: [0.9, 0.9, 0.9]
             },
-            axis: { x: 0.0, y: 0.0, z: 0.0 },
+            axis: { x: 1.0, y: 1.0, z: 1.0 },
             aperture: 0.0, 
             cutoff: 0.0      
         },
@@ -175,8 +175,8 @@ function updateMaterialColor(type, color){
 
 function defineMaterials(gui){
     sceneConfigurationObject.material = {
-        Ka: [0.1, 0.1, 0.1],         
-        Kd: [0.7, 0.7, 0.7],         
+        Ka: [0.8, 0.8, 0.8],         
+        Kd: [0.8, 0.8, 0.8],         
         Ks: [0.9, 0.9, 0.9], 
         shininess: 30         
     };
@@ -242,15 +242,9 @@ function defineScene(){
     name: "bunny",
         shape: BUNNY,
         transformations: [{transformationType: "t", measures: [-2.0, 1.25, -2.0]}, {transformationType: "s", measures: [2, 2, 2]}],
-        material: { Ka:[0.8, 0.8, 0.8],
-                    Kd:[0.6, 0.3, 0.1],
-                    Ks:[0.3, 0.15, 0.05]
-        },
+        material: sceneConfigurationObject.material,
         color: [],
     }
-
-
-
     // OTHER SCENE OBJECTS
     ];    
 }
@@ -404,6 +398,58 @@ function render(time) {
 
     const numLights = lights.length;
     gl.uniform1i(gl.getUniformLocation(program, "u_numLights"), numLights);
+    for (let i = 0; i < numLights; i ++){
+        const light = lights[i];
+
+        // position
+        gl.uniform4f(
+            gl.getUniformLocation(program, `u_L[${i}].p`),
+                light.position.x,
+                light.position.y,
+                light.position.z,
+                light.position.w
+        ); 
+    
+        // intensities:
+        // ambient
+        gl.uniform3fv(
+            gl.getUniformLocation(program, `u_L[${i}].a`),
+            light.intensities.ambient
+        );
+
+        // diffuse
+        gl.uniform3fv(
+            gl.getUniformLocation(program, `u_L[${i}].d`),
+            light.intensities.diffuse
+        );
+
+        // specular
+        gl.uniform3fv(
+            gl.getUniformLocation(program, `u_L[${i}].s`),
+            light.intensities.specular
+        );
+
+        // axis
+        // need to check if send as a vec3 or just floats  console.log(light);
+        gl.uniform3f(
+            gl.getUniformLocation(program, `u_L[${i}].axis`),
+            light.axis.x,
+            light.axis.y,
+            light.axis.z,
+        );
+
+        // aperture
+        gl.uniform1f(
+            gl.getUniformLocation(program, `u_L[${i}].aperture`),
+            light.intensities.aperture
+        );
+
+        // cutoff
+        gl.uniform1f(
+            gl.getUniformLocation(program, `u_L[${i}].cutoff`),
+            light.intensities.cutoff
+        );
+    }
    
     for(const object of sceneConfigurationObject.objects){
         STACK.pushMatrix();   
