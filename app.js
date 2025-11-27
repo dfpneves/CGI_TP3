@@ -245,7 +245,6 @@ function defineScene(){
         material: sceneConfigurationObject.material,
         color: [],
     }
-    // OTHER SCENE OBJECTS
     ];    
 }
 
@@ -304,7 +303,7 @@ function setupMouseEvents(){
                 eyeAt = mult(inCameraSpace(rotation), eyeAt);
                 newUp = mult(inCameraSpace(rotation), newUp);
 
-                console.log(eyeAt, newUp);
+                //console.log(eyeAt, newUp);
 
                 camera.eye[0] = camera.at[0] + eyeAt[0];
                 camera.eye[1] = camera.at[1] + eyeAt[1];
@@ -325,15 +324,11 @@ function setupMouseEvents(){
         down = true;
         lastX = event.offsetX;
         lastY = event.offsetY;
-        //gl.clearColor(0.2, 0.0, 0.0, 1.0);
     });
 
     canvas.addEventListener('mouseup', function (event) {
         down = false;
-        //gl.clearColor(0.0, 0.0, 0.0, 1.0);
     });
-    
-    
 }
 
 function resizeCanvasToFullWindow() {
@@ -378,8 +373,6 @@ function setup(shaders) {
     setupMouseEvents();
 
     window.requestAnimationFrame(render);
-    
-
 }
 
 function render(time) {
@@ -436,7 +429,7 @@ function render(time) {
             gl.getUniformLocation(program, `u_L[${i}].axis`),
             light.axis.x,
             light.axis.y,
-            light.axis.z,
+            light.axis.z
         );
 
         // aperture
@@ -488,15 +481,13 @@ function render(time) {
         gl.uniformMatrix4fv(gl.getUniformLocation(program, "u_normals"), false, flatten(normalMatrix(STACK.modelView())));
         gl.uniform1i(gl.getUniformLocation(program, "u_use_normals"), options.normals);
         // send material colors
-        gl.uniform3fv(gl.getUniformLocation(program, "u_Ka"), object.material.Ka);
-        gl.uniform3fv(gl.getUniformLocation(program, "u_Kd"), object.material.Kd);
-        gl.uniform3fv(gl.getUniformLocation(program, "u_Ks"), object.material.Ks);
-        gl.uniform1f(gl.getUniformLocation(program, "u_shininess"), material.shininess);
+        gl.uniform3fv(gl.getUniformLocation(program, "u_material.Ka"), object.material.Ka);
+        gl.uniform3fv(gl.getUniformLocation(program, "u_material.Kd"), object.material.Kd);
+        gl.uniform3fv(gl.getUniformLocation(program, "u_material.Ks"), object.material.Ks);
+        gl.uniform1f(gl.getUniformLocation(program, "u_material.shininess"), material.shininess);
         object.shape.draw(gl, program, gl.TRIANGLES);
         STACK.popMatrix();
     }
-
-   
 }
 
 const urls = ['shader.vert', 'shader.frag'];
@@ -546,14 +537,9 @@ loadShadersFromURLS(urls).then(shaders => setup(shaders));
         Gouraud shading -> vertex shader
         Phong shading -> do similar but it the fragment shader 
 
-    
-    
-
     suggested possible changes
         world coordinate instead of camera
         fly around using w,a,s,d
-
-    
 
     */
 

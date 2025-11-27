@@ -2,6 +2,7 @@
 
 precision mediump float;
 
+const int MAX_LIGHTS = 10;
 uniform bool u_use_normals;
 
 // Camera
@@ -11,48 +12,59 @@ uniform vec3 u_camera_eye;
 
 uniform int u_numLights;
 
-struct Light {
-    vec4 position;
+struct LightInfo {
     
+    // Intensities
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
 
+    // Light geomotry
+    vec4 position;
+    
     vec3 axis;
     float aperture;
     float cutoff;
 };
 
-uniform Light u_L[3];
+// array of lights
+uniform LightInfo u_L[MAX_LIGHTS];
 
-// material
-uniform vec3 u_Ka;
-uniform vec3 u_Kd;
-uniform vec3 u_Ks;
-uniform float u_shininess;
+
+// material struct
+struct MaterialInfo {
+    vec3 Ka;
+    vec3 Kd;
+    vec3 Ks;
+    float shininess;
+};
+
+// material 
+uniform MaterialInfo u_material;
+
 
 in vec3 v_normal;
 in vec3 v_position;
 
 out vec4 color;
 
-vec3 phongShading(Light light, vec3 N, vec3 P, vec3 V){
+vec3 phongShading(LightInfo light, vec3 N, vec3 P, vec3 V){
     vec3 L;
     
     if(light.position.w == 0.0) L = normalize(light.position.xyz);
     else L = normalize(light.position.xyz - P);
 
-    vec3 ambient = u_Ka * light.ambient;
+    vec3 ambient = u_material.Ka * light.ambient;
     
     //TODO: lightRing calculation, using cutOff and Aperture
     float lightRing = 1.0;
 
     float diffuseFactor = max( dot(L,N), 0.0 );
-    vec3 diffuse = diffuseFactor * light.diffuse * u_Kd;
+    vec3 diffuse = diffuseFactor * light.diffuse * u_material.Kd;
 
     vec3 H = normalize(L+V);
-    float specularFactor = pow(max(dot(N,H), 0.0), u_shininess);
-    vec3 specular = specularFactor * light.specular * u_Ks;
+    float specularFactor = pow(max(dot(N,H), 0.0), u_material.shininess);
+    vec3 specular = specularFactor * light.specular * u_material.Ks;
 
     if( dot(L,N) < 0.0 ) specular = vec3(0.0, 0.0, 0.0);
     
