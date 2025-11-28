@@ -86,21 +86,22 @@ function defineOptions(gui, gl){
 
 function initLights(){
     sceneConfigurationObject.lights = [
-        // Light 1 -> Directional
+        // Light 1 -> Spotlight
         {
-            position: { x: 0.0, y: 0.0, z: 10.0, w: 1.0 }, 
+            position: { x: 0.0, y: 5.0, z: 0.0, w: 1.0 }, 
             intensities: {
                 ambient: [0.2, 0.2, 0.2],
                 diffuse: [0.25, 0.25, 0.25],
                 specular: [1.0, 1.0, 1.0]
             },
-            axis: { x: 1.0, y: 1.0, z: 1.0 },
-            aperture: 0.0, 
-            cutoff: 0.0      
+            axis: { x: 0.0, y: -1.0, z: -1.0 },
+            aperture: 30.0, 
+            cutoff: 1.0,
+            turnedOn: true     
         },
-        // Light 2
+        // Light 2 -> Point
         {
-            position: { x: 0.0, y: 0.0, z: 0.0, w: 0.0 }, 
+            position: { x: 0.0, y: 5.0, z: 0.0, w: 1.0 }, 
             intensities: {
                 ambient: [0.5, 0.5, 0.5],
                 diffuse: [0.3, 0.3, 0.3],
@@ -108,19 +109,21 @@ function initLights(){
             },
             axis: { x: 0.0, y: 0.0, z: 0.0 }, 
             aperture: 0.0, 
-            cutoff: 0.0
+            cutoff: 0.0, 
+            turnedOn: true
         },
-        // Light 3
+        // Light 3 -> Directional
         {
-            position: { x: 0.0, y: 0.0, z: 0.0, w: 0.0 }, 
+            position: { x: -1.0, y: -0.5, z: 0.0, w: 0.0 }, 
             intensities: {
-                ambient: [0.0, 0.0, 0.0],
-                diffuse: [0.0, 0.0, 0.0],
-                specular: [0.0, 0.0, 0.0]
+                ambient: [0.2, 0.2, 0.2],
+                diffuse: [0.2, 0.2, 0.2],
+                specular: [0.3, 0.3, 0.3]
             },
             axis: { x: 0.0, y: 0.0, z: 0.0 }, 
             aperture: 0.0, 
-            cutoff: 0.0
+            cutoff: 0.0,
+            turnedOn: true
         }
     ]
 }
@@ -153,7 +156,8 @@ function makeLightGui(lightGui, light, index){
     lightAxisGui.add(light.axis, "z").min(-1).max(1).step(0.01);
 
     lightGui.add(light, "aperture").min(0).max(90).step(1);
-    lightGui.add(light, "cutoff").min(0).max(1).step(0.01);  
+    lightGui.add(light, "cutoff").min(0).max(1).step(0.01); 
+    lightGui.add(light, "turnedOn").name("Turned On").listen(); 
 
 }
 
@@ -202,8 +206,10 @@ function defineScene(){
     sceneConfigurationObject.objects = [{
         name: "Table",
         shape: CUBE,
-        transformations: [{transformationType: "s", measures: [10, 0.5, 10]}], // make Transformations 
-        material: {Ka:[0.43, 0.37, 0.18],
+        transformations: [
+            {transformationType: "s", measures: [10, 0.5, 10]}
+        ], // make Transformations 
+        material: {Ka:[0.4, 0.25, 0.00],
                    Kd:[0.0, 0.0, 0.0],
                    Ks:[0.0, 0.0, 0.0]},
         color: [],
@@ -384,6 +390,9 @@ function render(time) {
     
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.useProgram(program);
+
+    const debugSphereScale = 0.2;
+    const debugMaterial = { Ka: [1, 1, 1], Kd: [1, 1, 1], Ks: [1, 1, 1] }
     
     mView = lookAt(camera.eye, camera.at, camera.up);;
     const mProjection = perspective(camera.fovy, camera.aspect, camera.near, camera.far);
@@ -392,6 +401,7 @@ function render(time) {
 
     const numLights = lights.length;
     gl.uniform1i(gl.getUniformLocation(program, "u_numLights"), numLights);
+
     for (let i = 0; i < numLights; i ++){
         const light = lights[i];
 
@@ -408,19 +418,19 @@ function render(time) {
         // ambient
         gl.uniform3fv(
             gl.getUniformLocation(program, `u_L[${i}].ambient`),
-            light.intensities.ambient
+            light.turnedOn ? light.intensities.ambient : [0,0,0]
         );
 
         // diffuse
         gl.uniform3fv(
             gl.getUniformLocation(program, `u_L[${i}].diffuse`),
-            light.intensities.diffuse
+            light.turnedOn ? light.intensities.diffuse : [0,0,0]
         );
 
         // specular
         gl.uniform3fv(
             gl.getUniformLocation(program, `u_L[${i}].specular`),
-            light.intensities.specular
+            light.turnedOn ? light.intensities.specular : [0,0,0]
         );
 
         // axis
@@ -443,6 +453,9 @@ function render(time) {
             gl.getUniformLocation(program, `u_L[${i}].cutoff`),
             light.cutoff
         );
+
+        
+        
     }
    
     for(const object of sceneConfigurationObject.objects){
@@ -477,6 +490,8 @@ function render(time) {
                 }
             }
         }
+        
+
         gl.uniformMatrix4fv(gl.getUniformLocation(program, "u_model_view"), false, flatten(STACK.modelView()));
         gl.uniformMatrix4fv(gl.getUniformLocation(program, "u_normals"), false, flatten(normalMatrix(STACK.modelView())));
         gl.uniform1i(gl.getUniformLocation(program, "u_use_normals"), options.normals);

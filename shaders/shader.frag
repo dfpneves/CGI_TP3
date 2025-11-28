@@ -48,23 +48,39 @@ in vec3 v_position;
 
 out vec4 color;
 
+float spotLighting(LightInfo light, vec3 L){
+    float lightRing = 1.0;
+    float real_aperture = cos(radians(light.aperture));
+    float decay = light.cutoff;
+    if (light.position.w == 1.0 && light.aperture > 0.0){
+        vec3 axis_vec = normalize(light.axis);
+        float alpha = dot(-L, axis_vec);
+        if(alpha < real_aperture) lightRing = 0.0;
+        else{
+            float spot_base = max(0.0, alpha);
+            if(decay > 0.0) lightRing = pow(spot_base, decay);
+            else lightRing = 1.0;
+        }
+    }
+    return lightRing;
+}
+
 vec3 phongShading(LightInfo light, vec3 N, vec3 P, vec3 V){
     vec3 L;
     
     if(light.position.w == 0.0) L = normalize(light.position.xyz);
     else L = normalize(light.position.xyz - P);
 
+    float lightRing = spotLighting(light, L);
+
     vec3 ambient = u_material.Ka * light.ambient;
-    
-    //TODO: lightRing calculation, using cutOff and Aperture
-    float lightRing = 1.0;
 
     float diffuseFactor = max( dot(L,N), 0.0 );
-    vec3 diffuse = diffuseFactor * light.diffuse * u_material.Kd;
+    vec3 diffuse = diffuseFactor * light.diffuse * u_material.Kd * lightRing;
 
     vec3 H = normalize(L+V);
     float specularFactor = pow(max(dot(N,H), 0.0), u_material.shininess);
-    vec3 specular = specularFactor * light.specular * u_material.Ks;
+    vec3 specular = specularFactor * light.specular * u_material.Ks * lightRing;
 
     if( dot(L,N) < 0.0 ) specular = vec3(0.0, 0.0, 0.0);
     
