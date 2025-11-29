@@ -68,22 +68,27 @@ float spotLighting(LightInfo light, vec3 L){
 vec3 phongShading(LightInfo light, vec3 N, vec3 P, vec3 V){
     vec3 L;
     
+    // direction or point, spotlight
     if(light.position.w == 0.0) L = normalize(light.position.xyz);
     else L = normalize(light.position.xyz - P);
 
     float lightRing = spotLighting(light, L);
 
+    // ambient Ka
     vec3 ambient = u_material.Ka * light.ambient;
 
+    // diffuse Kd(N*L)
     float diffuseFactor = max( dot(L,N), 0.0 );
     vec3 diffuse = diffuseFactor * light.diffuse * u_material.Kd * lightRing;
 
+    // specular Ks(R*V)^n
     vec3 H = normalize(L+V);
     float specularFactor = pow(max(dot(N,H), 0.0), u_material.shininess);
     vec3 specular = specularFactor * light.specular * u_material.Ks * lightRing;
 
     if( dot(L,N) < 0.0 ) specular = vec3(0.0, 0.0, 0.0);
     
+    // result
     return ambient + diffuse + specular;
 }
 
@@ -94,7 +99,7 @@ void main() {
     }
     vec3 N = normalize(v_normal);
     vec3 P = v_position; 
-    vec3 V = normalize(-P);
+    vec3 V = normalize(u_camera_eye - P);
 
     vec3 final_color = vec3(0.0);
     for(int i = 0; i < u_numLights; i++) {

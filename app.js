@@ -88,14 +88,14 @@ function initLights(){
     sceneConfigurationObject.lights = [
         // Light 1 -> Spotlight
         {
-            position: { x: 0.0, y: 5.0, z: 0.0, w: 1.0 }, 
+            position: { x: 0.0, y: 5.0, z: 0.0, w: 0.0 }, 
             intensities: {
-                ambient: [0.2, 0.2, 0.2],
-                diffuse: [0.25, 0.25, 0.25],
+                ambient: [0.1, 0.1, 0.1],
+                diffuse: [0.8, 0.8, 0.8],
                 specular: [1.0, 1.0, 1.0]
             },
             axis: { x: 0.0, y: -1.0, z: -1.0 },
-            aperture: 30.0, 
+            aperture: 90.0, 
             cutoff: 1.0,
             turnedOn: true     
         },
@@ -110,7 +110,7 @@ function initLights(){
             axis: { x: 0.0, y: 0.0, z: 0.0 }, 
             aperture: 0.0, 
             cutoff: 0.0, 
-            turnedOn: true
+            turnedOn: false
         },
         // Light 3 -> Directional
         {
@@ -123,7 +123,7 @@ function initLights(){
             axis: { x: 0.0, y: 0.0, z: 0.0 }, 
             aperture: 0.0, 
             cutoff: 0.0,
-            turnedOn: true
+            turnedOn: false
         }
     ]
 }
@@ -179,10 +179,10 @@ function updateMaterialColor(type, color){
 
 function defineMaterials(gui){
     sceneConfigurationObject.material = {
-        Ka: [1.0, 0.8, 0.8],         
+        Ka: [0.1, 0.1, 0.1],         
         Kd: [0.8, 0.8, 0.8],         
-        Ks: [0.9, 0.9, 0.9], 
-        shininess: 30         
+        Ks: [1.0, 1.0, 1.0], 
+        shininess: 8        
     };
 
     const material = sceneConfigurationObject.material;
@@ -197,7 +197,7 @@ function defineMaterials(gui){
     materialGui.addColor(materialColors, "ambient").name("Ka").onChange(v => updateMaterialColor("Ka", v));
     materialGui.addColor(materialColors, "diffuse").name("Kd").onChange(v => updateMaterialColor("Kd", v));
     materialGui.addColor(materialColors, "specular").name("Ks").onChange(v => updateMaterialColor("Ks", v));
-    materialGui.add(material, "shininess").min(1).max(200).step(1);
+    materialGui.add(material, "shininess").min(1).max(256).step(1);
 
 
 }
@@ -210,10 +210,10 @@ function defineScene(){
             {transformationType: "s", measures: [10, 0.5, 10]}
         ], // make Transformations 
         material: {Ka:[0.4, 0.25, 0.00],
-                   Kd:[0.0, 0.0, 0.0],
-                   Ks:[0.0, 0.0, 0.0]},
-        color: [],
-
+                   Kd:[0.3, 0.3, 0.3],
+                   Ks:[0.1, 0.1, 0.1],
+                   shininess: 256,
+                },
     },
     {   
         name: "cube",
@@ -221,8 +221,9 @@ function defineScene(){
         transformations: [{transformationType: "t", measures: [2.0, 1.25, 2.0]}, {transformationType: "s", measures: [2, 2, 2]}],
         material: { Ka:[0.9, 0.1, 0.1],
                     Kd:[0.9, 0.1, 0.1],
-                    Ks:[0.9, 0.1, 0.1]
-        }
+                    Ks:[0.9, 0.1, 0.1],
+                    shininess: 1,
+                },
     },
     {
         name: "torus",
@@ -230,9 +231,10 @@ function defineScene(){
         transformations: [{transformationType: "t", measures: [-2.0, 0.7, 2.0]}, {transformationType: "s", measures: [2, 2, 2]}],
         material: { Ka:[0.2, 1.0, 0.5],
                     Kd:[0.7, 0.9, 0.5],
-                    Ks:[0.3, 0.15, 0.05]
+                    Ks:[0.3, 0.15, 0.05],
+                    shininess: 1,
         },
-        color: [],
+        shininess: 1,
     },
     {
     name: "sphere",
@@ -240,16 +242,17 @@ function defineScene(){
         transformations: [{transformationType: "t", measures: [2.0, 1.25, -2.0]}, {transformationType: "s", measures: [2, 2, 2]}],
         material: { Ka:[0.1, 0.4, 0.5],
                     Kd:[0.6, 0.3, 0.1],
-                    Ks:[0.3, 0.15, 0.05]
+                    Ks:[0.3, 0.15, 0.05],
+                    shininess: 1,
         },
-        color: [],
+        
     },
     {
     name: "bunny",
         shape: BUNNY,
         transformations: [{transformationType: "t", measures: [-2.0, 1.25, -2.0]}, {transformationType: "s", measures: [2, 2, 2]}],
         material: sceneConfigurationObject.material,
-        color: [],
+        shininess: sceneConfigurationObject.material.shininess,
     }
     ];    
 }
@@ -405,14 +408,30 @@ function render(time) {
     for (let i = 0; i < numLights; i ++){
         const light = lights[i];
 
+        let lightPosWorld = vec4(light.position.x, light.position.y, light.position.z, light.position.w);
+        let lightPosEye = mult(mView, lightPosWorld);
+
+
+
+        if (light.position.w === 1.0){
+        // from world to view to send to shaders
+            let axisEye = mult(mView, vec4(light.axis.x, light.axis.y, light.axis.z, 0.0));
+        // axis
+        gl.uniform3fv(
+            gl.getUniformLocation(program, `u_L[${i}].axis`),
+            [axisEye[0],
+            axisEye[1],
+            axisEye[2],]
+        );
+        }
+
         // position
-        gl.uniform4f(
+        gl.uniform4fv(
             gl.getUniformLocation(program, `u_L[${i}].position`),
-                light.position.x,
-                light.position.y,
-                light.position.z,
-                light.position.w
+                flatten(lightPosEye)
         ); 
+
+        
     
         // intensities:
         // ambient
@@ -431,15 +450,6 @@ function render(time) {
         gl.uniform3fv(
             gl.getUniformLocation(program, `u_L[${i}].specular`),
             light.turnedOn ? light.intensities.specular : [0,0,0]
-        );
-
-        // axis
-        // need to check if send as a vec3 or just floats  console.log(light);
-        gl.uniform3f(
-            gl.getUniformLocation(program, `u_L[${i}].axis`),
-            light.axis.x,
-            light.axis.y,
-            light.axis.z
         );
 
         // aperture
@@ -494,12 +504,17 @@ function render(time) {
 
         gl.uniformMatrix4fv(gl.getUniformLocation(program, "u_model_view"), false, flatten(STACK.modelView()));
         gl.uniformMatrix4fv(gl.getUniformLocation(program, "u_normals"), false, flatten(normalMatrix(STACK.modelView())));
-        gl.uniform1i(gl.getUniformLocation(program, "u_use_normals"), options.normals);
+        // note being used
+        // console.log(options.normals);
+        // gl.uniform1i(gl.getUniformLocation(program, "u_use_normals"), options.normals);
         // send material colors
         gl.uniform3fv(gl.getUniformLocation(program, "u_material.Ka"), object.material.Ka);
         gl.uniform3fv(gl.getUniformLocation(program, "u_material.Kd"), object.material.Kd);
         gl.uniform3fv(gl.getUniformLocation(program, "u_material.Ks"), object.material.Ks);
-        gl.uniform1f(gl.getUniformLocation(program, "u_material.shininess"), material.shininess);
+        // console.log(object.material.Ks);
+        // console.log(object.shininess);
+        // console.log(sceneConfigurationObject.material.shininess);
+        gl.uniform1f(gl.getUniformLocation(program, "u_material.shininess"), object.material.shininess);
         object.shape.draw(gl, program, gl.TRIANGLES);
         STACK.popMatrix();
     }
