@@ -15,6 +15,8 @@ import * as STACK from '../../libs/stack.js';
 let gl;
 let canvas;
 let program;
+let phongShadingProgram;
+let gouraudShadingProgram;
 let mView;
 let sceneConfigurationObject = {};
 let datGuiConfigurationObject = {};
@@ -66,7 +68,8 @@ function defineCamera(gui){
 function defineOptions(gui, gl){
     sceneConfigurationObject.options = {
         backfaceCulling: false,
-        depthTest: true
+        depthTest: true,
+        shadingType: "Phong"
     }
 
     // options gui
@@ -81,6 +84,8 @@ function defineOptions(gui, gl){
 
     if (options.depthTest) gl.enable(gl.DEPTH_TEST);
     if (options.backfaceCulling) gl.enable(gl.CULL_FACE);
+    optionsGui.add(options, "shadingType", ["Gouraud", "Phong"]).name("Shading Type").onChange(function(v){
+    });
     
 }
 
@@ -364,7 +369,9 @@ function setup(shaders) {
     CYLINDER.init(gl);
     SPHERE.init(gl);
 
-    program = buildProgramFromSources(gl, shaders['shader.vert'], shaders['shader.frag']);
+    phongShadingProgram = buildProgramFromSources(gl, shaders['shader_phong.vert'], shaders['shader_phong.frag']);
+    gouraudShadingProgram = buildProgramFromSources(gl, shaders['shader_gouraud.vert'], shaders['shader_gouraud.frag']);
+    program = phongShadingProgram;
     const gui = new dat.GUI();
 
     sceneConfigurationObject = {};
@@ -392,10 +399,11 @@ function render(time) {
     if (options.backfaceCulling) gl.enable(gl.CULL_FACE); else gl.disable(gl.CULL_FACE);
     
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.useProgram(program);
 
-    const debugSphereScale = 0.2;
-    const debugMaterial = { Ka: [1, 1, 1], Kd: [1, 1, 1], Ks: [1, 1, 1] }
+    if (options.shadingType == "Phong") program = phongShadingProgram;
+    else program = gouraudShadingProgram;
+
+    gl.useProgram(program);
     
     mView = lookAt(camera.eye, camera.at, camera.up);;
     const mProjection = perspective(camera.fovy, camera.aspect, camera.near, camera.far);
@@ -520,7 +528,7 @@ function render(time) {
     }
 }
 
-const urls = ['shader.vert', 'shader.frag'];
+const urls = ['shader_phong.vert', 'shader_phong.frag', 'shader_gouraud.vert', 'shader_gouraud.frag'];
 
 loadShadersFromURLS(urls).then(shaders => setup(shaders));
 
