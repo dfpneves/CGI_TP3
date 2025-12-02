@@ -345,6 +345,55 @@ function setupMouseEvents(){
     });
 }
 
+function setupKeyboardEvents(){
+    window.addEventListener("keydown", function(event){
+        const {camera} = sceneConfigurationObject;
+        const step = 0.1;
+        const {w_movement_vector, d_movement_vector} = getNormalizedMoveVectors(camera.eye, camera.at);
+        
+        switch(event.key){
+            case "r":
+                resetCamera();
+                break;    
+            case "w":
+                camera.eye = add(camera.eye, scale(step, w_movement_vector));
+                camera.at = add(camera.at, scale(step, w_movement_vector));
+                break;
+            case "s":
+                camera.eye = subtract(camera.eye, scale(step, w_movement_vector));
+                camera.at = subtract(camera.at, scale(step, w_movement_vector));
+                break;
+            case "a":
+                camera.eye = subtract(camera.eye, scale(step, d_movement_vector));
+                camera.at = subtract(camera.at, scale(step, d_movement_vector));
+                break;
+            case "d":
+                camera.eye = add(camera.eye, scale(step, d_movement_vector));
+                camera.at = add(camera.at, scale(step, d_movement_vector));
+                break;                
+        }
+    })
+}
+
+function resetCamera(){
+    const {camera} = sceneConfigurationObject;
+    camera.eye[0] = 0;
+    camera.eye[1] = 3;
+    camera.eye[2] = 10;
+    camera.at[0] = camera.at[1] = camera.at[2] = 0;
+    camera.up[0] = camera.up[2] = 0;
+    camera.up[1] = 1;
+    camera.fovy = 45;
+    camera.near = 0.1;
+    camera.far = 20;
+}
+
+function getNormalizedMoveVectors(eye, at){
+    const w_movement_vector = normalize(subtract(at, eye));
+    const d_movement_vector = normalize(vec3(-w_movement_vector[2], 0, w_movement_vector[0]));
+    return {w_movement_vector, d_movement_vector};
+}
+
 function resizeCanvasToFullWindow() {
     const {camera} = sceneConfigurationObject;
     canvas.width = window.innerWidth;
@@ -387,6 +436,7 @@ function setup(shaders) {
 
     resizeCanvasToFullWindow();
     setupMouseEvents();
+    setupKeyboardEvents();
 
     window.requestAnimationFrame(render);
 }
