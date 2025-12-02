@@ -53,20 +53,19 @@ function defineCamera(gui){
     });
 
     const eye = cameraGui.addFolder("eye");
-    eye.add(camera.eye, 0).step(0.05).listen().domElement.style.pointerEvents = "none";;
-    eye.add(camera.eye, 1).step(0.05).listen().domElement.style.pointerEvents = "none";;
-    eye.add(camera.eye, 2).step(0.05).listen().domElement.style.pointerEvents = "none";;
+    eye.add(camera.eye, 0).step(0.05).listen();
+    eye.add(camera.eye, 1).step(0.05).listen();
+    eye.add(camera.eye, 2).step(0.05).listen();
 
     const at = cameraGui.addFolder("at");
-    at.add(camera.at, 0).step(0.05).listen().domElement.style.pointerEvents = "none";;
-    at.add(camera.at, 1).step(0.05).listen().domElement.style.pointerEvents = "none";;
-    at.add(camera.at, 2).step(0.05).listen().domElement.style.pointerEvents = "none";;
+    at.add(camera.at, 0).step(0.05).listen();
+    at.add(camera.at, 1).step(0.05).listen();
+    at.add(camera.at, 2).step(0.05).listen();
 
     const up = cameraGui.addFolder("up");
     up.add(camera.up, 0).step(0.05).listen().domElement.style.pointerEvents = "none";;
     up.add(camera.up, 1).step(0.05).listen().domElement.style.pointerEvents = "none";;
     up.add(camera.up, 2).step(0.05).listen().domElement.style.pointerEvents = "none";;
-
 }
 
 /**
@@ -388,6 +387,26 @@ function setupMouseEvents(){
     });
 }
 
+/*
+    helping function that updates the GUI values
+*/
+function moveHelper(eyeScale, atScale, dir){
+    const {camera} = sceneConfigurationObject;
+    camera.eye[0] += eyeScale[0] * dir;
+    camera.eye[1] += eyeScale[1] * dir;
+    camera.eye[2] += eyeScale[2] * dir;
+
+    camera.at[0] += atScale[0] * dir;
+    camera.at[1] += atScale[1] * dir;
+    camera.at[2] += atScale[2] * dir;
+    /*
+    did noot work because replaced the var
+    camera.eye = add(camera.eye, scale(step, w_movement_vector));
+    camera.at = add(camera.at, scale(step, w_movement_vector));
+    */
+}
+
+
 /**
  * Function to setup keyboard Event Listeners
  */
@@ -396,26 +415,34 @@ function setupKeyboardEvents(){
         const {camera} = sceneConfigurationObject;
         const step = 0.1;
         const {w_movement_vector, d_movement_vector} = getNormalizedMoveVectors(camera.eye, camera.at);
+        let eyeScale = null;
+        let atScale = null;
+        let posDir = 1;
+        let negDir = -1;
         
         switch(event.key){
             case "r":
                 resetCamera();
                 break;    
             case "w":
-                camera.eye = add(camera.eye, scale(step, w_movement_vector));
-                camera.at = add(camera.at, scale(step, w_movement_vector));
+                eyeScale = scale(step, w_movement_vector);
+                atScale = scale(step, w_movement_vector);
+                moveHelper(eyeScale, atScale, posDir);
                 break;
             case "s":
-                camera.eye = subtract(camera.eye, scale(step, w_movement_vector));
-                camera.at = subtract(camera.at, scale(step, w_movement_vector));
+                eyeScale = scale(step, w_movement_vector);
+                atScale = scale(step, w_movement_vector);
+                moveHelper(eyeScale, atScale, negDir);
                 break;
             case "a":
-                camera.eye = subtract(camera.eye, scale(step, d_movement_vector));
-                camera.at = subtract(camera.at, scale(step, d_movement_vector));
+                eyeScale = scale(step, d_movement_vector);
+                atScale = scale(step, d_movement_vector);
+                moveHelper(eyeScale, atScale, posDir);
                 break;
             case "d":
-                camera.eye = add(camera.eye, scale(step, d_movement_vector));
-                camera.at = add(camera.at, scale(step, d_movement_vector));
+                eyeScale = scale(step, d_movement_vector);
+                atScale = scale(step, d_movement_vector);
+                moveHelper(eyeScale, atScale, negDir);
                 break;                
         }
     })
@@ -546,48 +573,37 @@ function render(time) {
             axisEye[2],]
         );
         }
-
         // position
         gl.uniform4fv(
             gl.getUniformLocation(program, `u_L[${i}].position`),
                 flatten(lightPosEye)
         ); 
-
-        
-    
         // intensities:
         // ambient
         gl.uniform3fv(
             gl.getUniformLocation(program, `u_L[${i}].ambient`),
             light.turnedOn ? light.intensities.ambient : [0,0,0]
         );
-
         // diffuse
         gl.uniform3fv(
             gl.getUniformLocation(program, `u_L[${i}].diffuse`),
             light.turnedOn ? light.intensities.diffuse : [0,0,0]
         );
-
         // specular
         gl.uniform3fv(
             gl.getUniformLocation(program, `u_L[${i}].specular`),
             light.turnedOn ? light.intensities.specular : [0,0,0]
         );
-
         // aperture
         gl.uniform1f(
             gl.getUniformLocation(program, `u_L[${i}].aperture`),
             light.aperture
         );
-
         // cutoff
         gl.uniform1f(
             gl.getUniformLocation(program, `u_L[${i}].cutoff`),
             light.cutoff
         );
-
-        
-        
     }
    
     for(const object of sceneConfigurationObject.objects){
@@ -626,16 +642,9 @@ function render(time) {
 
         gl.uniformMatrix4fv(gl.getUniformLocation(program, "u_model_view"), false, flatten(STACK.modelView()));
         gl.uniformMatrix4fv(gl.getUniformLocation(program, "u_normals"), false, flatten(normalMatrix(STACK.modelView())));
-        // note being used
-        // console.log(options.normals);
-        // gl.uniform1i(gl.getUniformLocation(program, "u_use_normals"), options.normals);
-        // send material colors
         gl.uniform3fv(gl.getUniformLocation(program, "u_material.Ka"), object.material.Ka);
         gl.uniform3fv(gl.getUniformLocation(program, "u_material.Kd"), object.material.Kd);
         gl.uniform3fv(gl.getUniformLocation(program, "u_material.Ks"), object.material.Ks);
-        // console.log(object.material.Ks);
-        // console.log(object.shininess);
-        // console.log(sceneConfigurationObject.material.shininess);
         gl.uniform1f(gl.getUniformLocation(program, "u_material.shininess"), object.material.shininess);
         object.shape.draw(gl, program, gl.TRIANGLES);
         STACK.popMatrix();
