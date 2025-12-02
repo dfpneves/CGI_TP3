@@ -1,5 +1,5 @@
 #version 300 es
-
+// Vertex shader for Gouraud Shading
 precision mediump float;
 
 const int MAX_LIGHTS = 10;
@@ -48,6 +48,11 @@ uniform MaterialInfo u_material;
 
 out vec3 v_color;
 
+/**
+* Function to compute spotlight decay 
+* @param {LightInfo} light: A light from LightInfo struct
+* @param {vec3} L: Light direction vector
+**/
 float spotLighting(LightInfo light, vec3 L) {
     float lightRing = 1.0f;
     float real_aperture = cos(radians(light.aperture));
@@ -58,9 +63,9 @@ float spotLighting(LightInfo light, vec3 L) {
         if(alpha < real_aperture)
             lightRing = 0.0f;
         else {
-            float spot_base = max(0.0f, alpha);
+            float spot_positive = max(0.0f, alpha);
             if(decay > 0.0f)
-                lightRing = pow(spot_base, decay);
+                lightRing = pow(spot_positive, decay);
             else
                 lightRing = 1.0f;
         }
@@ -68,6 +73,13 @@ float spotLighting(LightInfo light, vec3 L) {
     return lightRing;
 }
 
+/**
+* Function to compute Gouraud shading
+* @param {LightInfo} light: A light from LightInfo struct
+* @param {vec3} N: Normal vector
+* @param {vec3} P: Position vector
+* @param {vec3} V: View vector - vertex to camera eye direction
+**/
 vec3 gouraudShading(LightInfo light, vec3 N, vec3 P, vec3 V) {
     vec3 L;
 

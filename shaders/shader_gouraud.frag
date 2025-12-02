@@ -1,5 +1,5 @@
 #version 300 es
-
+// Fragment shader for Gouraud Shading 
 precision mediump float;
 
 in vec3 v_color;

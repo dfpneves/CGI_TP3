@@ -1,8 +1,8 @@
+// IMPORTS
 import { buildProgramFromSources, loadShadersFromURLS, setupWebGL } from '../../libs/utils.js';
 import { length, flatten, inverse, mult, normalMatrix, perspective, lookAt, vec4, vec3, vec2, subtract, add, scale, rotate, normalize } from '../../libs/MV.js';
 
 import * as dat from '../../libs/dat.gui.module.js';
-
 import * as CUBE from '../../libs/objects/cube.js';
 import * as BUNNY from '../../libs/objects/bunny.js';
 import * as TORUS from '../../libs/objects/torus.js';
@@ -10,7 +10,7 @@ import * as CYLINDER from '../../libs/objects/cylinder.js';
 import * as SPHERE from '../../libs/objects/sphere.js';
 import * as STACK from '../../libs/stack.js';
 
-
+// GLOBAL VARIABLES
 
 let gl;
 let canvas;
@@ -21,6 +21,10 @@ let mView;
 let sceneConfigurationObject = {};
 let datGuiConfigurationObject = {};
 
+/**
+ * Function to initialize the sceneConfigurationObject camera, and set up the GUI folders
+ * @param {dat.gui} gui: the GUI object
+ */
 function defineCamera(gui){
      // Camera  
     sceneConfigurationObject.camera = {
@@ -65,6 +69,11 @@ function defineCamera(gui){
 
 }
 
+/**
+ * Function to initialize scene options and GUI options folder
+ * @param {dat.gui} gui: the GUI object
+ * @param {WebGL2RenderingContext} gl: the WebGL rendering context
+ */
 function defineOptions(gui, gl){
     sceneConfigurationObject.options = {
         backfaceCulling: false,
@@ -89,6 +98,9 @@ function defineOptions(gui, gl){
     
 }
 
+/**
+ * Function to initialize the three light objects
+ */
 function initLights(){
     sceneConfigurationObject.lights = [
         // Light 1 -> Spotlight
@@ -133,10 +145,22 @@ function initLights(){
     ]
 }
 
+/**
+ * Function to convert RGB color into 0.0...1.0 float array
+ * @param {number} index: the index of the light object to update
+ * @param {string} type: the intensity type (ambient, diffuse or spechular)
+ * @param {number[]} color: the RGB color array to be converted 
+ */
 function updateLightIntensity(index, type, color){
     sceneConfigurationObject.lights[index].intensities[type] = [color[0] / 255, color[1] / 255, color[2] / 255];
 }
 
+/**
+ * Function to create the GUI for a light object
+ * @param {dat.GUI.folder} lightGui: the main GUI dolder for the given light
+ * @param {*} light: the light object
+ * @param {*} index: the index of the light object in the lights array 
+ */
 function makeLightGui(lightGui, light, index){
 
     const lightPositionGui = lightGui.addFolder("position");
@@ -166,6 +190,10 @@ function makeLightGui(lightGui, light, index){
 
 }
 
+/**
+ * Function to initialize and set the GUI for all the light objects in lights array
+ * @param {dat.GUI} gui: the GUI object 
+ */
 function defineLights(gui){
     initLights();
     const lights = sceneConfigurationObject.lights;
@@ -178,10 +206,19 @@ function defineLights(gui){
 
 }
 
+/**
+ * Function to convert RGB color into 0.0...1.0 float array
+ * @param {string} type: the material type (ka, kd or ks) 
+ * @param {number[]} color: the RGB color array to be converted 
+ */
 function updateMaterialColor(type, color){
     sceneConfigurationObject.material[type] = [color[0] / 255, color[1] / 255, color[2] / 255];
 }
 
+/**
+ * Function to initialize the default material configuration and GUI
+ * @param {dat.GUI} gui: the GUI object 
+ */
 function defineMaterials(gui){
     sceneConfigurationObject.material = {
         Ka: [0.1, 0.1, 0.1],         
@@ -207,6 +244,9 @@ function defineMaterials(gui){
 
 }
 
+/**
+ * Function to define the objects that make up the scene (Table, Cube, Torus and Bunny) and their transformations and material properties
+ */
 function defineScene(){
     sceneConfigurationObject.objects = [{
         name: "Table",
@@ -262,6 +302,9 @@ function defineScene(){
     ];    
 }
 
+/**
+ * Function to setup mouse Event Listeners
+ */
 function setupMouseEvents(){
     const { camera } = sceneConfigurationObject;
     let down = false;
@@ -345,6 +388,9 @@ function setupMouseEvents(){
     });
 }
 
+/**
+ * Function to setup keyboard Event Listeners
+ */
 function setupKeyboardEvents(){
     window.addEventListener("keydown", function(event){
         const {camera} = sceneConfigurationObject;
@@ -375,6 +421,9 @@ function setupKeyboardEvents(){
     })
 }
 
+/**
+ * Function to reset the camera configuration to the initial values
+ */
 function resetCamera(){
     const {camera} = sceneConfigurationObject;
     camera.eye[0] = 0;
@@ -388,12 +437,21 @@ function resetCamera(){
     camera.far = 20;
 }
 
+/**
+ * Function to compute the normalized movement vectors (for forward and right movement)
+ * @param {vec3} eye: the current position of the camera eye 
+ * @param {vec3} at : the current position the camera is pointing at
+ * @returns {{vec3, vec3}} : an object containing the normalized vectors
+ */
 function getNormalizedMoveVectors(eye, at){
     const w_movement_vector = normalize(subtract(at, eye));
     const d_movement_vector = normalize(vec3(-w_movement_vector[2], 0, w_movement_vector[0]));
     return {w_movement_vector, d_movement_vector};
 }
 
+/**
+ * Function to resize canvas to window width and height and update the camera aspect ratio
+ */
 function resizeCanvasToFullWindow() {
     const {camera} = sceneConfigurationObject;
     canvas.width = window.innerWidth;
@@ -402,11 +460,17 @@ function resizeCanvasToFullWindow() {
     gl.viewport(0, 0, canvas.width, canvas.height);
 }
     
+/**
+ * Function to transform a matrix from World Coordinates into Camera/View space
+ * @param {mat4} m: matrix to transform
+ * @returns {mat4}: the matrix transformed in camera space
+ */
 function inCameraSpace(m) {
     if (!mView) return m;
     const mInvView = inverse(mView);
     return mult(mInvView, mult(m, mView));
 }
+
 
 function setup(shaders) {
     canvas = document.getElementById('gl-canvas');
@@ -581,54 +645,3 @@ function render(time) {
 const urls = ['shader_phong.vert', 'shader_phong.frag', 'shader_gouraud.vert', 'shader_gouraud.frag'];
 
 loadShadersFromURLS(urls).then(shaders => setup(shaders));
-
-// todo
-    /*
-    GUI todo
-        pre: go over code check if implementation is correct
-        1. options - backface culling, depth test
-        2. take away aspect
-        3. add lights - 1,2,3
-            - position - x,y,z,w (w point or directional) (somehow also spotlight)
-            - intensities (I) - ambient, diffuse, specular (and their color)
-            - axis - x,y,z, aperture, cutoff
-        4. material - Ka,Kd,Ka, shininess 
-            aka bunny meterial changing
-
-
-    Scene todo
-        (can use json maybe?)
-        - first attempt ignore json
-        floor:
-        "a parallelepiped platform measuring 10 x 0.5 x 10 (in WC), 
-        aligned with the world axes and with its upper face at $y=0$."
-
-        4 objects:
-        "4 primitive objects, from those provided in the libs folder, 
-        placed on top of the platform and centered in each of the quadrants. 
-        You can use a 2 x 2 x 2 cube as a reference for their size. 
-        The Bunny object should be in one of the quadrants."
-
-        lights:
-        note can add a sphere object to point lights to position them...
-        "1 to 3 lights controlled by the user using an interface implemented using the dat.gui library."
-
-        array of lights each light is a object
-                                        "If it supports more than one light source, 
-                                        its interface should be created in such a way that 
-                                        adding a new light source to your program will simply result in 
-                                        adding another object (with the properties of the light source) 
-                                        to a vector that stores all the lights in the scene."
-
-
-    shading
-        Gouraud shading -> vertex shader
-        Phong shading -> do similar but it the fragment shader 
-
-    suggested possible changes
-        world coordinate instead of camera
-        fly around using w,a,s,d
-
-    */
-
-    // matrices

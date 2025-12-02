@@ -1,5 +1,5 @@
 #version 300 es
-
+// Fragment shader for Phong shading
 precision mediump float;
 
 const int MAX_LIGHTS = 10;
@@ -48,6 +48,11 @@ in vec3 v_position;
 
 out vec4 color;
 
+/**
+* Function to compute spotlight decay 
+* @param {LightInfo} light: A light from LightInfo struct
+* @param {vec3} L: Light direction vector
+**/
 float spotLighting(LightInfo light, vec3 L){
     float lightRing = 1.0;
     float real_aperture = cos(radians(light.aperture));
@@ -65,6 +70,13 @@ float spotLighting(LightInfo light, vec3 L){
     return lightRing;
 }
 
+/**
+* Function to compute Phong shading
+* @param {LightInfo} light: A light from LightInfo struct
+* @param {vec3} N: Normal vector
+* @param {vec3} P: Position vector
+* @param {vec3} V: View vector - vertex to camera eye direction
+**/
 vec3 phongShading(LightInfo light, vec3 N, vec3 P, vec3 V){
     vec3 L;
     
